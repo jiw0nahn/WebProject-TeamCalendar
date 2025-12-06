@@ -1,6 +1,7 @@
 const mysql = require('mysql2');
-const env = process.env.NODE_ENV || 'developement';
-const config = require(process.cwd() + '/congif/config.json')[env];
+const env = process.env.NODE_ENV || 'development';
+const path = require('path');
+const config = require(path.join(__dirname, '..', 'config', 'config.json'))[env];
 
 const pool = mysql.createPool({
     host: config.host,
