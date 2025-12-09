@@ -3,20 +3,28 @@ const Sequelize = require('sequelize');
 class Todo extends Sequelize.Model {
     static initiate(sequelize) {
         Todo.init({
-        content: {
-            type: Sequelize.STRING(200),
+        title: {
+        type: Sequelize.STRING(50),
+        allowNull: false,
+        },
+        // 시작 시간
+        start: {
+            type: Sequelize.DATE, // 시간까지 저장하려면 DATE
             allowNull: false,
         },
-        status: {
-            type: Sequelize.BOOLEAN, // TINYINT(1)은 보통 boolean으로 처리
-            defaultValue: false, // 0: 대기
+        // 종료 시간
+        end: {
+            type: Sequelize.DATE,
             allowNull: false,
         },
-        targetDate: {
-            type: Sequelize.DATEONLY, // 시간 없이 '날짜'만 저장 (YYYY-MM-DD)
-            allowNull: false,
-        },
-        }, {
+        // 진행 상태구분용
+        color: { type: Sequelize.STRING(20), defaultValue: '#3788d8' },
+        // 개인 일정이면 false, 팀 일정이면 true 구분 (또는 teamId 유무로 판단 가능)
+        isAllDay: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: true, // 기본은 하루 종일
+        }
+    }, {
         sequelize,
         timestamps: true,
         underscored: false,

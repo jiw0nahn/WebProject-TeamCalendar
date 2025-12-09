@@ -1,5 +1,5 @@
 // controllers/team.js
-const { User, Team } = require('../models');
+const { User, Team, TeamMember } = require('../models');
 
 // 1. 팀 생성하기
 exports.createTeam = async (req, res, next) => {
@@ -56,6 +56,28 @@ exports.createTeam = async (req, res, next) => {
         await team.addUser(req.user.id);
 
         return res.redirect(`/?teamId=${team.id}`);
+    } catch (error) {
+        console.error(error);
+        next(error);
+    }
+};
+
+// 팀별 개인 메모 수정하기
+exports.updateMemo = async (req, res, next) => {
+    try {
+        const { teamId } = req.params;
+        const { memo } = req.body;
+
+        // TeamMember 테이블에서 나와 팀의 연결 고리를 찾아서 메모 업데이트
+        await TeamMember.update({ memo: memo }, {
+        where: {
+            userId: req.user.id,
+            teamId: teamId,
+        }
+        });
+
+        // 저장 후 다시 그 팀 화면으로 돌아가기
+        return res.redirect(`/?teamId=${teamId}`);
     } catch (error) {
         console.error(error);
         next(error);

@@ -11,6 +11,10 @@ class TeamMember extends Sequelize.Model {
                 type: Sequelize.INTEGER,
                 allowNull: false,
             },
+            memo: { // 개인메모
+            type: Sequelize.TEXT,
+            allowNull: true,
+        },
         }, {
         sequelize,
         timestamps: true,

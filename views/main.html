@@ -4,7 +4,7 @@
     <div class="calendar-wrap">
         <div class="team-selector">
             <select id="team-select" class="input-group" onchange="location.href='/?teamId=' + this.value">
-                <option value="">🟦 전체 일정 보기</option>
+                <option value="">🟦 내 전체 일정 보기</option>
                 {% for team in teams %}
                 <option value="{{team.id}}" {% if currentTeam and currentTeam.id == team.id %}selected{% endif %}>
                     {{team.name}}
@@ -21,7 +21,7 @@
             <h2>{% if currentTeam %}{{currentTeam.name}} 메모{% else %}팀 메모{% endif %}</h2>
             {% if currentTeam %}
                 <form action="/team/{{currentTeam.id}}/memo" method="post" class="memo-form">
-                    <textarea name="memo">{{currentTeam.memo}}</textarea>
+                    <textarea name="memo" placeholder="이 팀에서 기억해야 할 나만의 메모를 적어보세요.">{{myMemo}}</textarea>
                     <button type="submit" class="btn">저장</button>
                 </form>
             {% else %}
@@ -38,35 +38,95 @@
                     {% if teamMembers and teamMembers.length > 0 %}
                         {% for member in teamMembers %}
                         <li style="margin-bottom: 5px;">
-                            {{member.nick}} 
-                            
+                            {{member.nick}}
                             {% if member.id == user.id %}
                             <span style="font-weight:bold; color:#007bff;">(나)</span>
                             {% endif %}
                         </li>
                         {% endfor %}
-                {% else %}
+                    {% else %}
                         <li>멤버를 불러오지 못했습니다.</li>
-                {% endif %}
+                    {% endif %}
                 {% else %}
                     <li>팀을 선택하면 멤버가 보입니다.</li>
                 {% endif %}
             </ul>
         </div>
     </div>
+
+    <div id="eventModal" class="modal-overlay">
+        <div class="modal-window">
+            <div class="modal-header">
+            <h2 id="modalTitle">일정 추가</h2>
+            <button type="button" onclick="closeModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </div>
+            
+            <form id="eventForm" onsubmit="return false;">
+            <input type="hidden" id="eventId" name="id">
+            <input type="hidden" id="teamId" name="teamId">
+            
+            <div class="modal-body">
+                <label>일정 내용</label>
+                <input type="text" id="evtTitle" name="title" required placeholder="예: 팀 회의">
+
+                <label>시작 날짜</label>
+                <input type="date" id="evtStart" name="start" required>
+
+                <label>종료 날짜</label>
+                <input type="date" id="evtEnd" name="end" required>
+
+                <label>담당자</label>
+                <select id="evtAssignee" name="assigneeId">
+                <option value=""> 팀 전체 일정 (담당자 없음)</option>
+                {% for member in teamMembers %}
+                    <option value="{{member.id}}">{{member.nick}}</option>
+                {% endfor %}
+                </select>
+
+                <label>진행 상태</label>
+                <div class="color-picker">
+                    <div class="color-option selected" style="background:#dc3545;" onclick="selectColor(this, '#dc3545')" title="진행중"></div>
+                    <div class="color-option" style="background:#28a745;" onclick="selectColor(this, '#28a745')" title="완료"></div>
+                </div>
+                <input type="hidden" id="evtColor" name="color" value="#dc3545">
+
+                <div style="display:flex; gap:10px; margin-top:10px;">
+                <button type="button" class="btn btn-primary" id="saveBtn">저장하기</button>
+                <button type="button" class="btn" id="deleteBtn" style="background:#dc3545; color:white; display:none;" onclick="deleteCurrentEvent()">삭제</button>
+                </div>
+            </div>
+            </form>
+        </div>
+    </div>
 {% endblock %}
 
 {% block right_content %}
     {% if user %}
-        <ul class="todo-list">
-            <li class="todo-item">
-                <input type="checkbox"> DB 설계서 작성하기
-            </li>
-            <li class="todo-item">
-                <input type="checkbox"> UI 프로토타입 만들기
-            </li>
+        <ul class="todo-list" style="list-style:none; padding:0;">
+            {% if myTodos and myTodos.length > 0 %}
+                {% for todo in myTodos %}
+                <li class="todo-item">
+                    <div class="todo-date">
+                        {{todo.dateStr}}
+                    </div>
+                    
+                    <div class="todo-content">
+                        <span class="status-dot" style="background-color: {{todo.color}};"></span>
+                        
+                        <span>{{todo.title}}</span>
+                        
+                        {% if not currentTeam %}
+                            <span class="team-badge">({{todo.teamName}})</span>
+                        {% endif %}
+                    </div>
+                </li>
+                {% endfor %}
+            {% else %}
+                <li style="color: #999; padding: 20px 0; text-align: center;">
+                    예정된 일정이 없습니다.
+                </li>
+            {% endif %}
         </ul>
-        <button class="btn btn-add-todo">+ 할 일 추가</button>
     {% else %}
         <p class="login-required">
             로그인이 필요합니다.
@@ -75,25 +135,138 @@
 {% endblock %}
 
 {% block script %}
-    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var calendarEl = document.getElementById('calendar');
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+<script>
+    const modal = document.getElementById('eventModal');
+    const urlParams = new URLSearchParams(window.location.search);
+    const currentTeamId = urlParams.get('teamId');
 
-            var calendar = new FullCalendar.Calendar(calendarEl, {
-                initialView: 'dayGridMonth',
-                locale: 'ko',
-                contentHeight: 'auto', // 스크롤 제거 핵심 옵션
-                headerToolbar: {
-                    left: 'prev,next today',
-                    center: 'title',
-                    right: 'dayGridMonth,listWeek'
-                },
-                events: []
-            });
+    document.addEventListener('DOMContentLoaded', function() {
+        var calendarEl = document.getElementById('calendar');
+        var dbEvents = JSON.parse(`{{ events | safe }}`); 
 
-            calendar.render();
+        var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ko',
+        height: '100%',
+        selectable: true,
+        displayEventTime: false, // 시간 숨기기
+        events: dbEvents,
+        
+        select: function(info) {
+            if (!currentTeamId) { alert('팀을 먼저 선택해주세요!'); return; }
+            openModal('add', info);
+        },
+
+        eventClick: function(info) {
+            openModal('edit', info.event);
+        }
         });
-    </script>
+        calendar.render();
+    });
+
+    // 모달 열기
+    function openModal(mode, data) {
+        modal.style.display = 'flex';
+        document.getElementById('teamId').value = currentTeamId;
+        
+        // 색상 선택 초기화
+        document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+
+        if (mode === 'add') {
+            document.getElementById('modalTitle').innerText = '새 일정 추가';
+            document.getElementById('deleteBtn').style.display = 'none';
+            
+            document.getElementById('eventId').value = '';
+            document.getElementById('evtTitle').value = '';
+            document.getElementById('evtStart').value = data.startStr;
+            document.getElementById('evtEnd').value = data.startStr;
+            
+            // 기본값: 빨강(진행중)
+            document.getElementById('evtColor').value = '#dc3545';
+            document.querySelector('.color-option[title="진행중"]').classList.add('selected');
+            document.getElementById('evtAssignee').value = ""; // 담당자 초기화
+        } else {
+            document.getElementById('modalTitle').innerText = '일정 수정 / 완료';
+            document.getElementById('deleteBtn').style.display = 'block';
+
+            document.getElementById('eventId').value = data.id;
+            document.getElementById('evtTitle').value = data.title;
+            
+            const start = data.start ? data.start.toISOString().split('T')[0] : '';
+            const end = data.end ? data.end.toISOString().split('T')[0] : start;
+
+            document.getElementById('evtStart').value = start;
+            document.getElementById('evtEnd').value = end;
+            
+            // 색상 선택 복구
+            const color = data.backgroundColor;
+            document.getElementById('evtColor').value = color;
+            if(color === '#28a745') document.querySelectorAll('.color-option')[1].classList.add('selected');
+            else document.querySelectorAll('.color-option')[0].classList.add('selected');
+
+            // 담당자 복구
+            if (data.extendedProps && data.extendedProps.assigneeId) {
+                document.getElementById('evtAssignee').value = data.extendedProps.assigneeId;
+            } else {
+                document.getElementById('evtAssignee').value = "";
+            }
+        }
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    function selectColor(element, color) {
+        document.getElementById('evtColor').value = color;
+        document.querySelectorAll('.color-option').forEach(el => el.classList.remove('selected'));
+        element.classList.add('selected');
+    }
+
+    // 저장 버튼 (REST API: POST/PATCH)
+    document.getElementById('saveBtn').addEventListener('click', function() {
+        const id = document.getElementById('eventId').value;
+        const title = document.getElementById('evtTitle').value;
+        const start = document.getElementById('evtStart').value;
+        const end = document.getElementById('evtEnd').value;
+        const color = document.getElementById('evtColor').value;
+        const assigneeId = document.getElementById('evtAssignee').value;
+        const teamId = document.getElementById('teamId').value;
+
+        if(!title || !start) { alert('내용과 시작일을 입력하세요'); return; }
+
+        const payload = { id, title, start, end, color, assigneeId, teamId };
+        
+        // ID가 있으면 수정(PATCH), 없으면 생성(POST)
+        const method = id ? 'PATCH' : 'POST';
+        
+        fetch('/schedule', {
+            method: method,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        })
+        .then(res => {
+            if(res.ok) location.reload(); // 성공 시 새로고침
+            else alert('저장 실패');
+        })
+        .catch(console.error);
+    });
+
+    // 삭제 버튼 (REST API: DELETE)
+    function deleteCurrentEvent() {
+        const id = document.getElementById('eventId').value;
+        if(confirm('정말 삭제하시겠습니까?')) {
+            fetch('/schedule', {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: id })
+            })
+            .then(res => {
+                if(res.ok) location.reload();
+                else alert('삭제 실패');
+            });
+        }
+    }
+</script>
 {% endblock %}

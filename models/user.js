@@ -32,7 +32,11 @@ class User extends Sequelize.Model {
         // 1. 내가 만든 팀들 (Owner)
         db.User.hasMany(db.Team, { foreignKey: 'ownerId', sourceKey: 'id' });
         // 2. 내가 속한 팀들 (Member) - 다대다 관계
-        db.User.belongsToMany(db.Team, { through: db.TeamMember });
+        db.User.belongsToMany(db.Team, {
+            through: db.TeamMember,
+            foreignKey: 'userId', // TeamMember 테이블에 있는 컬럼명
+            otherKey: 'teamId'    // 반대편 컬럼명
+        });
         // 3. 내 할 일들 (Assignee)
         db.User.hasMany(db.Todo, { foreignKey: 'assigneeId', sourceKey: 'id' });
     }
