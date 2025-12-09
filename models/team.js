@@ -29,9 +29,9 @@ class Team extends Sequelize.Model {
     }
 
     static associate(db) {
-        // 1. 팀의 방장 (Owner)
+        // 1. 팀의 방장
         db.Team.belongsTo(db.User, { foreignKey: 'ownerId', targetKey: 'id' });
-        // 2. 팀의 멤버들 (Members)
+        // 2. 팀의 멤버들
         db.Team.belongsToMany(db.User, {
             through: db.TeamMember,
             foreignKey: 'teamId', // 내 키

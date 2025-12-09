@@ -70,13 +70,13 @@ exports.renderJoin = (req, res) => {
         teams = user.Teams; // 내 팀 리스트
         }
 
-        // 사용자가 드롭다운에서 특정 팀을 선택했는지 확인 (쿼리스트링 ?teamId=1)
+        // 사용자가 드롭다운에서 특정 팀을 선택했는지 확인
         const { teamId } = req.query;
         // 내가 속한 팀 ID들만 추출 (예: [1, 2, 5])
         const myTeamIds = teams.map(t => t.id);
 
         if (req.user) {
-            // 달력 데이터 조회 (Calendar)
+            // 달력 데이터 조회
             let calendarWhere = {};
 
             if (teamId) {

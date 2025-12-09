@@ -1,6 +1,6 @@
 const express = require('express');
 const { isLoggedIn, isNotLoggedIn } = require('../middlewares');
-const { renderMain, renderJoin, createEvent, updateEvent, deleteEvent } = require('../controllers/page.js'); // 나머지 컨트롤러도 구현해야함
+const { renderMain, renderJoin, createEvent, updateEvent, deleteEvent } = require('../controllers/page.js');
 
 const router = express.Router();
 

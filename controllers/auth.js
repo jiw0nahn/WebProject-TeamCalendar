@@ -1,6 +1,6 @@
 const bcrypt = require('bcrypt');
 const passport = require('passport');
-const User = require('../models/user'); // [수정] 모델을 직접 가져옵니다.
+const User = require('../models/user'); 
 
 // 사용자가 보낸 정보로 계정을 생성 (회원가입)
 exports.join = async (req, res, next) => {
