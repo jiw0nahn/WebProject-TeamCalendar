@@ -1,0 +1,174 @@
+:root {
+    --bg-color: #f4f5f7;
+    --primary-color: #555;
+    --accent-color: #007bff;
+    --border-color: #ddd;
+    --shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; font-family: 'Noto Sans KR', sans-serif; background-color: var(--bg-color); }
+a { text-decoration: none; color: inherit; }
+
+/* 레이아웃 구조 (CSS Grid) */
+.container {
+    display: grid;
+    grid-template-columns: 250px 1fr 250px; /* 왼쪽(프로필) - 중앙(달력) - 오른쪽(할일) */
+    grid-template-rows: 1fr;
+    height: 100vh;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* 1. 왼쪽 사이드바 (프로필) */
+.left-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.profile-card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    text-align: center;
+}
+
+.user-name { font-size: 1.2rem; font-weight: bold; margin-bottom: 10px; display: block;}
+.btn {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    background: white;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    cursor: pointer;
+    text-align: center;
+    font-size: 0.9rem;
+    transition: 0.2s;
+}
+.btn:hover { background: #eee; }
+.btn-primary { background: var(--accent-color); color: white; border: none; }
+.btn-primary:hover { background: #0056b3; }
+
+/* 로그인 폼 스타일 */
+.input-group { margin-bottom: 10px; text-align: left; }
+.input-group label { display: block; font-size: 0.8rem; margin-bottom: 3px; color: #666; }
+.input-group input { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; }
+
+/* 2. 중앙 영역 (달력 + 하단 팀정보) */
+.center-content {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto; /* 내용 많으면 스크롤 */
+}
+
+/* 달력 영역 */
+.calendar-wrap {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    flex: 0 0 auto;
+    height: auto;
+    
+    display: flex;
+    flex-direction: column;
+}
+
+/* 하단 팀 정보 영역 */
+.team-info-wrap {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    flex: 1; /* 공간을 1만큼 차지 */
+    display: flex;
+    gap: 20px;
+}
+.team-memo, .team-members { flex: 1; }
+
+/* 3. 오른쪽 사이드바 (My Todo) */
+.right-sidebar {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: var(--shadow);
+    overflow-y: auto;
+}
+
+h2 { font-size: 1.1rem; margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid var(--bg-color); padding-bottom: 10px; }
+
+/* 반응형 */
+@media screen and (max-width: 1000px) {
+    .container {
+        grid-template-columns: 1fr; /* 1줄로 변경 */
+        grid-template-rows: auto;
+        height: auto;
+    }
+}
+
+.team-selector {
+    margin-bottom: 15px;
+}
+
+#team-select {
+    width: 200px;
+    padding: 5px;
+}
+
+/* 메모장 영역 */
+.memo-form textarea {
+    width: 100%;
+    height: 100px;
+    resize: none;
+    border: 1px solid #ddd;
+    padding: 10px;
+    font-family: inherit; /* 폰트 상속 */
+}
+
+.memo-form .btn {
+    margin-top: 5px;
+    width: auto; /* 버튼 크기 글자에 맞춤 */
+}
+
+/* 메모 없을 때 안내 문구 */
+.memo-empty {
+    color: #999;
+    line-height: 100px;
+    text-align: center;
+    background: #f9f9f9;
+    border-radius: 4px;
+}
+
+/* 팀원 목록 리스트 */
+.member-list {
+    padding-left: 20px;
+    color: #555;
+}
+
+/* 오른쪽 사이드바 (Todo) 스타일 */
+
+.todo-list {
+    list-style: none;
+    padding: 0;
+}
+
+.todo-item {
+    padding: 10px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.btn-add-todo {
+    margin-top: 10px;
+}
+
+/* 로그인 필요 안내 문구 */
+.login-required {
+    color: #aaa;
+    text-align: center;
+    margin-top: 50px;
+}

@@ -1,8 +1,99 @@
-{% extends 'layout.html' %} <!--기본 특징(헤더, 푸터 등)은 layout.html파일 것을 가져와서 쓴다(상속)-->
+{% extends 'layout.html' %}
 
 {% block content %}
+    <div class="calendar-wrap">
+        <div class="team-selector">
+            <select id="team-select" class="input-group" onchange="location.href='/?teamId=' + this.value">
+                <option value="">🟦 전체 일정 보기</option>
+                {% for team in teams %}
+                <option value="{{team.id}}" {% if currentTeam and currentTeam.id == team.id %}selected{% endif %}>
+                    {{team.name}}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
 
+        <div id="calendar"></div>
+    </div>
+
+    <div class="team-info-wrap">
+        <div class="team-memo">
+            <h2>{% if currentTeam %}{{currentTeam.name}} 메모{% else %}팀 메모{% endif %}</h2>
+            {% if currentTeam %}
+                <form action="/team/{{currentTeam.id}}/memo" method="post" class="memo-form">
+                    <textarea name="memo">{{currentTeam.memo}}</textarea>
+                    <button type="submit" class="btn">저장</button>
+                </form>
+            {% else %}
+                <div class="memo-empty">
+                    팀을 선택하면 메모를 볼 수 있습니다.
+                </div>
+            {% endif %}
+        </div>
+
+        <div class="team-members">
+            <h2>팀원 목록</h2>
+            <ul class="member-list">
+                {% if currentTeam %}
+                    {% if teamMembers and teamMembers.length > 0 %}
+                        {% for member in teamMembers %}
+                        <li style="margin-bottom: 5px;">
+                            {{member.nick}} 
+                            
+                            {% if member.id == user.id %}
+                            <span style="font-weight:bold; color:#007bff;">(나)</span>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li>멤버를 불러오지 못했습니다.</li>
+                    {% endif %}
+                    {% else %}
+                    <li>팀을 선택하면 멤버가 보입니다.</li>
+                    {% endif %}
+            </ul>
+        </div>
+    </div>
+{% endblock %}
+
+{% block right_content %}
+    {% if user %}
+        <ul class="todo-list">
+            <li class="todo-item">
+                <input type="checkbox"> DB 설계서 작성하기
+            </li>
+            <li class="todo-item">
+                <input type="checkbox"> UI 프로토타입 만들기
+            </li>
+        </ul>
+        <button class="btn btn-add-todo">+ 할 일 추가</button>
+    {% else %}
+        <p class="login-required">
+            로그인이 필요합니다.
+        </p>
+    {% endif %}
 {% endblock %}
 
 {% block script %}
+    <script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.15/index.global.min.js'></script>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var calendarEl = document.getElementById('calendar');
+
+            var calendar = new FullCalendar.Calendar(calendarEl, {
+                initialView: 'dayGridMonth',
+                locale: 'ko',
+                contentHeight: 'auto', // 스크롤 제거 핵심 옵션
+                headerToolbar: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,listWeek'
+                },
+                events: []
+            });
+
+            calendar.render();
+        });
+    </script>
 {% endblock %}

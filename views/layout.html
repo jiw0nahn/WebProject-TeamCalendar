@@ -3,49 +3,138 @@
     <head>
         <meta charset="UTF-8">
         <title>{{title}}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <link rel="stylesheet" href="/main.css">
     </head>
     <body>
-    <div class="container">
-        <div class="profile-wrap">
-            <div class="profile">
-            {% if user and user.id %}
-                <div class="user-name">{{'안녕하세요! ' + user.nick + '님'}}</div>
-                <div class="half">
-                <div>내 팀</div>
-                <div class="count following-count">{{followingCount}}</div>
-                </div>
+        <div class="container">
+        
+        <aside class="left-sidebar">
+            <div class="profile-card">
+                {% if user and user.id %}
+                <span class="user-name">{{user.nick}}님</span>
                 <input id="my-id" type="hidden" value="{{user.id}}">
-                <a id="logout" href="/auth/logout" class="btn">로그아웃</a>
-                        
-                <hr>
-            <input id="my-id" type="hidden" value="{{user.id}}">
-            <a id="my-profile" href="/profile" class="btn">내 프로필</a>
-            <a id="logout" href="/auth/logout" class="btn">로그아웃</a>
-            {% else %}
-            <form id="login-form" action="/auth/login" method="post">
-                <div class="input-group">
+                <a href="/auth/logout" class="btn">로그아웃</a>
+                {% else %}
+                <form id="login-form" action="/auth/login" method="post">
+                    <div class="input-group">
                     <label for="email">이메일</label>
-                    <input id="email" type="email" name="email" required autofocus>
-                </div>
-                <div class="input-group">
+                    <input id="email" type="email" name="email" required>
+                    </div>
+                    <div class="input-group">
                     <label for="password">비밀번호</label>
                     <input id="password" type="password" name="password" required>
-                </div>
-                    <a id="join" href="/join" class="btn">회원가입</a>
-                    <button id="login" type="submit" class="btn">로그인</button>
-            </form>
-            {% endif %}
+                    </div>
+                    <button id="login" type="submit" class="btn btn-primary">로그인</button>
+                    <a href="/join" class="btn">회원가입</a>
+                </form>
+                {% endif %}
             </div>
-        </div>
-        <main class="center-content">  <!--본문 내용, 스크립트 등은 main.html이-->
+
+            {% if user %}
+            <div class="team-sidebar-wrap" style="background:white; padding:15px; border-radius:12px; margin-top:15px; box-shadow:0 2px 5px rgba(0,0,0,0.05);">
+                
+                <h3 style="font-size:1rem; margin-top:0; border-bottom:1px solid #eee; padding-bottom:10px;">내 팀 목록</h3>
+                <ul class="my-team-list" style="list-style:none; padding:0; margin-bottom:15px;">
+                    {% if teams and teams.length > 0 %}
+                        {% for team in teams %}
+                        <li style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid #f1f1f1;">
+                        
+                        <a href="/?teamId={{team.id}}" 
+                            style="color:#333; text-decoration:none; flex:1; font-size: 0.95rem;">
+                            {{team.name}}
+                        </a>
+
+                        <button type="button" onclick="copyToClipboard('{{team.code}}')" title="초대 코드 복사"
+                                style="border:none; background:none; cursor:pointer; color:#888; font-size:1rem;">
+                            초대 코드 복사
+                        </button>
+                        </li>
+                        {% endfor %}
+                    {% else %}
+                        <li style="color:#999; font-size:0.9rem; padding:10px 0;">가입된 팀이 없습니다.</li>
+                    {% endif %}
+                    </ul>
+
+                <button id="toggle-team-btn" class="btn" style="background:#f8f9fa; color:#333; border:1px dashed #ccc; width:100%;">+ 팀 추가하기</button>
+                
+                <div id="team-form-container" style="display:none; margin-top:10px; padding-top:10px; border-top:1px dashed #eee;">
+                    <select id="team-type-select" class="input-group" style="width:100%; padding:5px; margin-bottom:10px;">
+                    <option value="create">새로운 팀 만들기</option>
+                    <option value="join">초대 코드로 입장</option>
+                    </select>
+
+                    <form id="create-team-form" action="/team/create" method="post">
+                    <input type="text" name="name" placeholder="팀 이름" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:5px;">
+                    <button type="submit" class="btn btn-primary">생성하기</button>
+                    </form>
+
+                    <form id="join-team-form" action="/team/join" method="post" style="display:none;">
+                    <input type="text" name="code" placeholder="초대 코드" required style="width:100%; padding:8px; border:1px solid #ddd; border-radius:4px; margin-bottom:5px;">
+                    <button type="submit" class="btn" style="background:#28a745; color:white; border:none;">입장하기</button>
+                    </form>
+                </div>
+            </div>
+
+            <script>
+                // 1. 초대 코드 복사 기능
+                function copyToClipboard(code) {
+                navigator.clipboard.writeText(code).then(() => {
+                    alert('초대 코드 [' + code + '] 가 복사되었습니다!\n팀원에게 공유하세요.');
+                }).catch(err => {
+                    console.error('복사 실패:', err);
+                    prompt('이 코드를 복사해서 사용하세요:', code); // 복사 실패 시 수동 복사 유도
+                });
+                }
+
+                // 2. 팀 추가 토글 기능
+                const toggleBtn = document.getElementById('toggle-team-btn');
+                const container = document.getElementById('team-form-container');
+                const select = document.getElementById('team-type-select');
+                const createForm = document.getElementById('create-team-form');
+                const joinForm = document.getElementById('join-team-form');
+
+                if (toggleBtn) {
+                    toggleBtn.addEventListener('click', () => {
+                    if (container.style.display === 'none') {
+                        container.style.display = 'block';
+                        toggleBtn.innerText = 'X 닫기';
+                    } else {
+                        container.style.display = 'none';
+                        toggleBtn.innerText = '+ 팀 추가하기';
+                    }
+                    });
+                }
+
+                if (select) {
+                    select.addEventListener('change', (e) => {
+                    if (e.target.value === 'create') {
+                        createForm.style.display = 'block';
+                        joinForm.style.display = 'none';
+                    } else {
+                        createForm.style.display = 'none';
+                        joinForm.style.display = 'block';
+                    }
+                    });
+                }
+            </script>
+            {% endif %}
+            </aside>
+
+        <main class="center-content">
             {% block content %}
             {% endblock %}
         </main>
 
-        <aside class="right-side">
+        <aside class="right-sidebar">
+            <h2>My Todo</h2>
             {% block right_content %}
-                {% endblock %}
+            <p style="color:#aaa; text-align:center;">로그인 후 확인하세요</p>
+            {% endblock %}
         </aside>
+
+        </aside>
+        {% block script %}
+        {% endblock %}
     </body>
 </html>
