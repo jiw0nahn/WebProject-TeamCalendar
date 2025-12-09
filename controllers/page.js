@@ -17,6 +17,7 @@ exports.renderJoin = (req, res) => {
             include: [{
             model: Team,
             attributes: ['id', 'name', 'memo', 'code'], // 필요한 것만 가져오기
+            through: { attributes: [] } // 중간 테이블 데이터는 필요 없음
             }],
         });
         teams = user.Teams; // 내 팀 리스트
@@ -26,27 +27,26 @@ exports.renderJoin = (req, res) => {
         const { teamId } = req.query;
 
         if (teamId && req.user) {
-            // (1) 팀 정보만 깔끔하게 가져옴
+            // 팀 정보만 가져옴
             currentTeam = await Team.findOne({ where: { id: teamId } });
 
             if (currentTeam) {
-                    // (2) [수동 조회] 중간 테이블(TeamMember)에서 이 팀에 속한 userId들을 싹 긁어옴
+                    // 중간 테이블(TeamMember)에서 이 팀에 속한 userId들을 싹 긁어옴
                     const memberRelations = await TeamMember.findAll({
                         where: { teamId: teamId }
                     });
-
-                    // userId만 추출 (예: [1, 5, 8])
+                    // userId만 추출
                     const userIds = memberRelations.map(r => r.userId);
 
-                    // (3) [수동 조회] 유저 테이블에서 그 ID를 가진 사람들을 찾아옴
+                    // 유저 테이블에서 그 ID를 가진 사람들을 찾아옴
                     if (userIds.length > 0) {
-                        teamMembers = await User.findAll({
-                            where: { id: userIds },
-                            attributes: ['id', 'nick', 'email']
-                        });
-                    }
-                    
-                    console.log(`=== 수동 조회 성공: ${teamMembers.length}명 ===`);
+                    teamMembers = await User.findAll({
+                        where: { id: userIds },
+                        attributes: ['id', 'nick', 'email'], // 비밀번호는 빼고 가져옴
+                        order: [['nick', 'ASC']] // 가나다순 정렬
+                    });
+                }
+                // 디버깅용: 터미널에 누가 조회됐는지 출력
                 }
             }
 

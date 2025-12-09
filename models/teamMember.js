@@ -2,7 +2,16 @@ const Sequelize = require('sequelize');
 
 class TeamMember extends Sequelize.Model {
     static initiate(sequelize) {
-        TeamMember.init({}, {
+        TeamMember.init({
+            userId: {
+            type: Sequelize.INTEGER,
+            allowNull: false,
+            },
+            teamId: {
+                type: Sequelize.INTEGER,
+                allowNull: false,
+            },
+        }, {
         sequelize,
         timestamps: true,
         underscored: false,
